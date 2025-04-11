@@ -89,6 +89,49 @@
         );
       }
     }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("consulta-form");
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+
+    for (const [key, value] of formData.entries()) {
+      params.append(key, value.trim());
+    }
+
+    const url = `https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXX/exec?${params.toString()}`;
+
+    const resultDiv = document.getElementById("resultado");
+    resultDiv.innerHTML = "Consultando...";
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      resultDiv.innerHTML = `
+        <div style="border: 1px solid #ccc; padding: 15px; margin-top: 20px; background-color: #fff;">
+          <h3>Pase de Acceso</h3>
+          <p><strong>Nombre:</strong> ${data["Nombre completo del estudiante"]}</p>
+          <p><strong>RUT:</strong> ${data["Nombre de usuario del estudiante"]}</p>
+          <p><strong>Asignatura:</strong> ${data["Asignatura"]}</p>
+          <p><strong>Ensayo:</strong> ${data["Ensayo"]}</p>
+          <p><strong>Sala:</strong> ${data["Lugar"]}</p>
+          <p><strong>Grupo:</strong> ${data["Grupo"]}</p>
+          <p><strong>Fecha:</strong> ${data["Fecha"]} de ${data["Hora de inicio"]} a ${data["Hora de fin"]}</p>
+        </div>
+      `;
+    } catch (err) {
+      resultDiv.innerHTML = `<p style="color: red;">No se encontró ningún pase con esos datos.</p>`;
+    }
+  });
+});
+
+    
+    
   </script>
 </head>
 <body>
@@ -127,6 +170,7 @@
 
     <button type="submit">Buscar Pase</button>
   </form>
-
+<div id="resultado"></div>
+  
 </body>
 </html>
