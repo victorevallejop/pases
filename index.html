@@ -2,9 +2,60 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario de Consulta</title>
+  <title>Formulario de Pase Presencial</title>
+  <style>
+    body {
+      font-family: Calibri, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #0c4c7d;
+      text-align: center;
+    }
+
+    form {
+      background-color: white;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #ec660c;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #cf580a;
+    }
+  </style>
+
   <script>
-    // Simulación inicial con dependencias (relleno real se hace desde GAS)
     const data = {
       "EET": {
         "VAL": ["HIS", "MAT"],
@@ -24,7 +75,7 @@
           sedeSelect.innerHTML += `<option value="${sede}">${sede}</option>`
         );
       }
-      updateAsignatura(); // limpiar dependientes
+      updateAsignatura(); // limpiar siguiente combo
     }
 
     function updateAsignatura() {
@@ -41,7 +92,9 @@
   </script>
 </head>
 <body>
-  <h2>Consulta de Pase Presencial</h2>
+
+  <h2>Formulario de Pase Presencial</h2>
+
   <form id="consulta-form">
     <label>Programa:</label>
     <select id="programa" name="programa" onchange="updateSede()" required>
@@ -70,12 +123,10 @@
     <input type="time" name="hora" required>
 
     <label>RUT:</label>
-    <input type="text" name="rut" placeholder="Sin puntos ni guion, con dígito verificador" required>
+    <input type="text" name="rut" placeholder="Ej. 22117111K" required>
 
-    <br><br>
     <button type="submit">Buscar Pase</button>
   </form>
 
-  <div id="resultado"></div>
 </body>
 </html>
