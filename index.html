@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario de Consulta</title>
+  <script>
+    // Simulación inicial con dependencias (relleno real se hace desde GAS)
+    const data = {
+      "EET": {
+        "VAL": ["HIS", "MAT"],
+        "STG": ["HIS"]
+      },
+      "DUO": {
+        "QTA": ["LEN"]
+      }
+    };
+
+    function updateSede() {
+      const programa = document.getElementById("programa").value;
+      const sedeSelect = document.getElementById("sede");
+      sedeSelect.innerHTML = `<option value="">Seleccione</option>`;
+      if (data[programa]) {
+        Object.keys(data[programa]).forEach(sede =>
+          sedeSelect.innerHTML += `<option value="${sede}">${sede}</option>`
+        );
+      }
+      updateAsignatura(); // limpiar dependientes
+    }
+
+    function updateAsignatura() {
+      const programa = document.getElementById("programa").value;
+      const sede = document.getElementById("sede").value;
+      const asignaturaSelect = document.getElementById("asignatura");
+      asignaturaSelect.innerHTML = `<option value="">Seleccione</option>`;
+      if (data[programa] && data[programa][sede]) {
+        data[programa][sede].forEach(asig =>
+          asignaturaSelect.innerHTML += `<option value="${asig}">${asig}</option>`
+        );
+      }
+    }
+  </script>
+</head>
+<body>
+  <h2>Consulta de Pase Presencial</h2>
+  <form id="consulta-form">
+    <label>Programa:</label>
+    <select id="programa" name="programa" onchange="updateSede()" required>
+      <option value="">Seleccione</option>
+      <option value="DUO">DUO</option>
+      <option value="EET">EET</option>
+    </select>
+
+    <label>Sede:</label>
+    <select id="sede" name="sede" onchange="updateAsignatura()" required></select>
+
+    <label>Asignatura:</label>
+    <select id="asignatura" name="asignatura" required></select>
+
+    <label>Actividad:</label>
+    <select name="actividad" required>
+      <option value="">Seleccione</option>
+      <option value="EN">EN</option>
+      <option value="CR">CR</option>
+    </select>
+
+    <label>Fecha:</label>
+    <input type="date" name="fecha" required>
+
+    <label>Hora:</label>
+    <input type="time" name="hora" required>
+
+    <label>RUT:</label>
+    <input type="text" name="rut" placeholder="Sin puntos ni guion, con dígito verificador" required>
+
+    <br><br>
+    <button type="submit">Buscar Pase</button>
+  </form>
+
+  <div id="resultado"></div>
+</body>
+</html>
