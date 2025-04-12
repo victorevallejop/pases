@@ -167,6 +167,8 @@
     }
 
     function renderPase(clase) {
+      const textoQR = `Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]}`;
+
       return `
         <div class="pase">
           <h3>Pase de Acceso</h3>
@@ -178,7 +180,7 @@
           <p><strong>Grupo:</strong> ${clase["Grupo"]}</p>
           <p><strong>Fecha:</strong> ${formatearFecha(clase["Fecha"])} de ${formatearHora(clase["Hora de inicio"])} a ${formatearHora(clase["Hora de fin"])} </p>
           <div style="text-align:center; margin-top:15px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(clase["Nombre QR"])}" alt="Código QR">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(textoQR)}" alt="Código QR">
           </div>
         </div>
       `;
