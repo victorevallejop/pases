@@ -84,6 +84,16 @@
   <script>
     let datosFiltrados = [];
 
+    function formatearFecha(fechaStr) {
+      const fecha = new Date(fechaStr);
+      return fecha.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function formatearHora(horaStr) {
+      const hora = new Date(horaStr);
+      return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    }
+
     document.getElementById("rut").addEventListener("change", async () => {
       const rut = document.getElementById("rut").value.trim();
       if (!rut) return;
@@ -121,7 +131,7 @@
       opciones.forEach(v => {
         const option = document.createElement("option");
         option.value = v;
-        option.textContent = v;
+        option.textContent = formatearFecha(v);
         select.appendChild(option);
       });
     }
@@ -129,7 +139,14 @@
     function actualizarHoras() {
       const fecha = document.getElementById("fecha").value;
       const horas = [...new Set(datosFiltrados.filter(d => d["Fecha"] === fecha).map(d => d["Hora de inicio"]))];
-      llenarSelect("hora", horas);
+      const selectHora = document.getElementById("hora");
+      selectHora.innerHTML = "<option value=''>Seleccione</option>";
+      horas.forEach(h => {
+        const option = document.createElement("option");
+        option.value = h;
+        option.textContent = formatearHora(h);
+        selectHora.appendChild(option);
+      });
     }
 
     function mostrarPaseSiUnico() {
@@ -159,7 +176,10 @@
           <p><strong>Ensayo:</strong> ${clase["Ensayo"]}</p>
           <p><strong>Sala:</strong> ${clase["Lugar"]}</p>
           <p><strong>Grupo:</strong> ${clase["Grupo"]}</p>
-          <p><strong>Fecha:</strong> ${clase["Fecha"]} de ${clase["Hora de inicio"]} a ${clase["Hora de fin"]}</p>
+          <p><strong>Fecha:</strong> ${formatearFecha(clase["Fecha"])} de ${formatearHora(clase["Hora de inicio"])} a ${formatearHora(clase["Hora de fin"])} </p>
+          <div style="text-align:center; margin-top:15px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(clase["Nombre QR"])}" alt="Código QR">
+          </div>
         </div>
       `;
     }
