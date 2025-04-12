@@ -258,7 +258,7 @@
   }
 
   function renderPase(clase) {
-    const textoQR = Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]};
+    const textoQR = `Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]}`;
 
     return `
       <div class="pase">
