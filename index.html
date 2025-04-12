@@ -53,124 +53,117 @@
     button:hover {
       background-color: #cf580a;
     }
+
+    .pase {
+      border: 1px solid #ccc;
+      padding: 15px;
+      background-color: #fff;
+      margin-bottom: 20px;
+    }
   </style>
-
-  <script>
-    const data = {
-      "EET": {
-        "VAL": ["HIS", "MAT"],
-        "STG": ["HIS"]
-      },
-      "DUO": {
-        "QTA": ["LEN"]
-      }
-    };
-
-    function updateSede() {
-      const programa = document.getElementById("programa").value;
-      const sedeSelect = document.getElementById("sede");
-      sedeSelect.innerHTML = `<option value="">Seleccione</option>`;
-      if (data[programa]) {
-        Object.keys(data[programa]).forEach(sede =>
-          sedeSelect.innerHTML += `<option value="${sede}">${sede}</option>`
-        );
-      }
-      updateAsignatura(); // limpiar siguiente combo
-    }
-
-    function updateAsignatura() {
-      const programa = document.getElementById("programa").value;
-      const sede = document.getElementById("sede").value;
-      const asignaturaSelect = document.getElementById("asignatura");
-      asignaturaSelect.innerHTML = `<option value="">Seleccione</option>`;
-      if (data[programa] && data[programa][sede]) {
-        data[programa][sede].forEach(asig =>
-          asignaturaSelect.innerHTML += `<option value="${asig}">${asig}</option>`
-        );
-      }
-    }
-
-
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("consulta-form");
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const formData = new FormData(form);
-    const params = new URLSearchParams();
-
-    for (const [key, value] of formData.entries()) {
-      params.append(key, value.trim());
-    }
-
-    const url = `https://script.google.com/macros/s/AKfycbzBdy0TJPXc0CbBAMBb3sypkDR93mE1-bkpYKN0N5v-R1kg1mNN62cHkpl69-mSKygy/exec${params.toString()}`;
-
-    const resultDiv = document.getElementById("resultado");
-    resultDiv.innerHTML = "Consultando...";
-
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-
-      resultDiv.innerHTML = `
-        <div style="border: 1px solid #ccc; padding: 15px; margin-top: 20px; background-color: #fff;">
-          <h3>Pase de Acceso</h3>
-          <p><strong>Nombre:</strong> ${data["Nombre completo del estudiante"]}</p>
-          <p><strong>RUT:</strong> ${data["Nombre de usuario del estudiante"]}</p>
-          <p><strong>Asignatura:</strong> ${data["Asignatura"]}</p>
-          <p><strong>Ensayo:</strong> ${data["Ensayo"]}</p>
-          <p><strong>Sala:</strong> ${data["Lugar"]}</p>
-          <p><strong>Grupo:</strong> ${data["Grupo"]}</p>
-          <p><strong>Fecha:</strong> ${data["Fecha"]} de ${data["Hora de inicio"]} a ${data["Hora de fin"]}</p>
-        </div>
-      `;
-    } catch (err) {
-      resultDiv.innerHTML = `<p style="color: red;">No se encontró ningún pase con esos datos.</p>`;
-    }
-  });
-});
-
-    
-    
-  </script>
 </head>
 <body>
 
   <h2>Formulario de Pase Presencial</h2>
 
   <form id="consulta-form">
-    <label>Programa:</label>
-    <select id="programa" name="programa" onchange="updateSede()" required>
-      <option value="">Seleccione</option>
-      <option value="DUO">DUO</option>
-      <option value="EET">EET</option>
-    </select>
-
-    <label>Sede:</label>
-    <select id="sede" name="sede" onchange="updateAsignatura()" required></select>
-
-    <label>Asignatura:</label>
-    <select id="asignatura" name="asignatura" required></select>
-
-    <label>Actividad:</label>
-    <select name="actividad" required>
-      <option value="">Seleccione</option>
-      <option value="EN">EN</option>
-      <option value="CR">CR</option>
-    </select>
-
-    <label>Fecha:</label>
-    <input type="date" name="fecha" required>
-
-    <label>Hora:</label>
-    <input type="time" name="hora" required>
-
     <label>RUT:</label>
-    <input type="text" name="rut" placeholder="Ej. 22117111K" required>
+    <input type="text" id="rut" name="rut" placeholder="Ej. 22117111K" required>
 
-    <button type="submit">Buscar Pase</button>
+    <div id="campos-adicionales" style="display: none;">
+      <label>Fecha:</label>
+      <select id="fecha" name="fecha" required></select>
+
+      <label>Hora:</label>
+      <select id="hora" name="hora" required></select>
+    </div>
   </form>
-<div id="resultado"></div>
-  
+
+  <div id="resultado" style="margin-top: 20px;"></div>
+
+  <script>
+    let datosFiltrados = [];
+
+    document.getElementById("rut").addEventListener("change", async () => {
+      const rut = document.getElementById("rut").value.trim();
+      if (!rut) return;
+
+      const url = `https://script.google.com/macros/s/AKfycbxkqgno-MCqD8kcWq-llNuZ46Cuxi4Ar45n1J3UWGpucUarLucBOzC9-_mCVTmG5Ex6/exec?action=buscarPorRUT&rut=${encodeURIComponent(rut)}`;
+      const response = await fetch(url);
+      const resultado = document.getElementById("resultado");
+
+      try {
+        const datos = await response.json();
+        if (datos.length === 0) {
+          resultado.innerHTML = `<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>`;
+          document.getElementById("campos-adicionales").style.display = "none";
+          return;
+        }
+
+        datosFiltrados = datos;
+        document.getElementById("campos-adicionales").style.display = "block";
+        resultado.innerHTML = "";
+
+        const fechas = [...new Set(datos.map(d => d["Fecha"]))];
+        llenarSelect("fecha", fechas);
+
+        document.getElementById("fecha").addEventListener("change", actualizarHoras);
+        document.getElementById("hora").addEventListener("change", mostrarPaseSiUnico);
+
+      } catch (e) {
+        resultado.innerHTML = `<p style='color:red;'>Error al consultar el RUT.</p>`;
+      }
+    });
+
+    function llenarSelect(id, opciones) {
+      const select = document.getElementById(id);
+      select.innerHTML = "<option value=''>Seleccione</option>";
+      opciones.forEach(v => {
+        const option = document.createElement("option");
+        option.value = v;
+        option.textContent = v;
+        select.appendChild(option);
+      });
+    }
+
+    function actualizarHoras() {
+      const fecha = document.getElementById("fecha").value;
+      const horas = [...new Set(datosFiltrados.filter(d => d["Fecha"] === fecha).map(d => d["Hora de inicio"]))];
+      llenarSelect("hora", horas);
+    }
+
+    function mostrarPaseSiUnico() {
+      const fecha = document.getElementById("fecha").value;
+      const hora = document.getElementById("hora").value;
+      const resultado = document.getElementById("resultado");
+
+      const coincidencias = datosFiltrados.filter(d => d["Fecha"] === fecha && d["Hora de inicio"] === hora);
+
+      if (coincidencias.length === 1) {
+        resultado.innerHTML = renderPase(coincidencias[0]);
+      } else if (coincidencias.length > 1) {
+        resultado.innerHTML = `<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>` +
+          coincidencias.map(c => renderPase(c)).join("");
+      } else {
+        resultado.innerHTML = "";
+      }
+    }
+
+    function renderPase(clase) {
+      return `
+        <div class="pase">
+          <h3>Pase de Acceso</h3>
+          <p><strong>Nombre:</strong> ${clase["Nombre completo del estudiante"]}</p>
+          <p><strong>RUT:</strong> ${clase["Nombre de usuario del estudiante"]}</p>
+          <p><strong>Asignatura:</strong> ${clase["Asignatura"]}</p>
+          <p><strong>Ensayo:</strong> ${clase["Ensayo"]}</p>
+          <p><strong>Sala:</strong> ${clase["Lugar"]}</p>
+          <p><strong>Grupo:</strong> ${clase["Grupo"]}</p>
+          <p><strong>Fecha:</strong> ${clase["Fecha"]} de ${clase["Hora de inicio"]} a ${clase["Hora de fin"]}</p>
+        </div>
+      `;
+    }
+  </script>
+
 </body>
 </html>
