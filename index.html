@@ -135,15 +135,13 @@
     return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
   const isFromMoodle = window.location !== window.parent.location;
+
+  window.addEventListener("DOMContentLoaded", () => {
+  
   if (!isFromMoodle) {
     document.getElementById("limpiar").style.display = "block";
   }
-    if (!isFromMoodle) {
-      document.getElementById("limpiar").style.display = "block";
-    }
-    // (ya definido arriba, se elimina duplicado)
     const soloDia = (isoStr) => new Date(isoStr).toISOString().split("T")[0];
     const urlParams = new URLSearchParams(window.location.search);
     const rut = urlParams.get("rut");
@@ -181,7 +179,7 @@
       loader.style.display = "none";
 
       if (datos.length === 0) {
-        resultado.innerHTML = `<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>`;
+        resultado.innerHTML = "<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>";
         document.getElementById("campos-adicionales").style.display = "none";
         return;
       }
@@ -214,7 +212,7 @@
 
     } catch (e) {
       loader.style.display = "none";
-      resultado.innerHTML = `<p style='color:red;'>Error al consultar el RUT.</p>`;
+      resultado.innerHTML = "<p style='color:red;'>Error al consultar el RUT.</p>";
     }
   });
 
@@ -252,7 +250,7 @@
     if (coincidencias.length === 1) {
       resultado.innerHTML = renderPase(coincidencias[0]);
     } else if (coincidencias.length > 1) {
-      resultado.innerHTML = `<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>` +
+      resultado.innerHTML = "<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>" +
         coincidencias.map(c => renderPase(c)).join("");
     } else {
       resultado.innerHTML = "";
@@ -260,7 +258,7 @@
   }
 
   function renderPase(clase) {
-    const textoQR = `Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]}`;
+    const textoQR = Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]};
 
     return `
       <div class="pase">
