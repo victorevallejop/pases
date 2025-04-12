@@ -3,16 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta de Pase Presencial</title>
+  <title>Formulario de Pase Presencial</title>
   <style>
-    input[readonly], select:disabled {
-      background-color: #eee;
-      color: #555;
-      cursor: not-allowed;
-    }
     body {
       font-family: Calibri, sans-serif;
-      background-color: #ffffff;
+      background-color: #f2f2f2;
       padding: 20px;
       margin: 0;
     }
@@ -99,7 +94,7 @@
 </head>
 <body>
 
-  <h2>Consulta de Pase Presencial</h2>
+  <h2>Formulario de Pase Presencial</h2>
 
   <form id="consulta-form">
     <label>RUT:</label>
@@ -112,7 +107,7 @@
       <label>Hora:</label>
       <select id="hora" name="hora" required></select>
     </div>
-    <button type="button" id="limpiar" style="display: none;" title="Solo para asistentes y administradores">Limpiar formulario</button>
+    <button type="button" id="limpiar">Limpiar formulario</button>
   </form>
 
 <div id="loader">
@@ -135,30 +130,13 @@
     return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
-  const isFromMoodle = window.location !== window.parent.location;
-
   window.addEventListener("DOMContentLoaded", () => {
-  
-  if (!isFromMoodle) {
-    document.getElementById("limpiar").style.display = "block";
-  }
-    const soloDia = (isoStr) => new Date(isoStr).toISOString().split("T")[0];
     const urlParams = new URLSearchParams(window.location.search);
     const rut = urlParams.get("rut");
-    const fechaParam = urlParams.get("fecha");
     if (rut) {
       const inputRut = document.getElementById("rut");
       inputRut.value = rut;
       inputRut.dispatchEvent(new Event("change"));
-    }
-
-    if (fechaParam === "hoy") {
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const hoyISO = hoy.toISOString().split("T")[0];
-      urlParams.set("fecha", hoyISO);
-      const newUrl = `${window.location.origin}${window.location.pathname}?${urlParams}`;
-      window.history.replaceState({}, "", newUrl);
     }
   });
 
@@ -171,7 +149,7 @@
     loader.style.display = "block";
     resultado.innerHTML = "";
 
-    const url = `https://script.google.com/macros/s/AKfycbzjcnzGnRxRtBn2Pv1vu0GOZP9NVO0Hr6sHXLonJtpBPIk9_Jv2gr2JaXLLZNC-I6Pe/exec?action=buscarPorRUT&rut=${encodeURIComponent(rut)}`;
+    const url = `https://script.google.com/macros/s/AKfycbxkqgno-MCqD8kcWq-llNuZ46Cuxi4Ar45n1J3UWGpucUarLucBOzC9-_mCVTmG5Ex6/exec?action=buscarPorRUT&rut=${encodeURIComponent(rut)}`;
     const response = await fetch(url);
 
     try {
@@ -179,7 +157,7 @@
       loader.style.display = "none";
 
       if (datos.length === 0) {
-        resultado.innerHTML = "<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>";
+        resultado.innerHTML = `<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>`;
         document.getElementById("campos-adicionales").style.display = "none";
         return;
       }
@@ -191,28 +169,11 @@
       llenarSelect("fecha", fechas);
 
       document.getElementById("fecha").addEventListener("change", actualizarHoras);
-
-      // Si el acceso es desde Moodle, deshabilitamos campos automáticamente (excepto hora si hay más de una clase)
-      if (isFromMoodle) {
-        document.getElementById("rut").setAttribute("readonly", true);
-        document.getElementById("fecha").setAttribute("disabled", true);
-
-        const horas = [...new Set(datosFiltrados.map(d => soloDia(d["Fecha"])) )];
-        if (horas.length === 1) {
-          document.getElementById("hora").setAttribute("disabled", true);
-        } else {
-          document.getElementById("hora").removeAttribute("disabled");
-        }
-      } else {
-        document.getElementById("rut").removeAttribute("readonly");
-        document.getElementById("fecha").removeAttribute("disabled");
-        document.getElementById("hora").removeAttribute("disabled");
-      }
       document.getElementById("hora").addEventListener("change", mostrarPaseSiUnico);
 
     } catch (e) {
       loader.style.display = "none";
-      resultado.innerHTML = "<p style='color:red;'>Error al consultar el RUT.</p>";
+      resultado.innerHTML = `<p style='color:red;'>Error al consultar el RUT.</p>`;
     }
   });
 
@@ -229,7 +190,7 @@
 
   function actualizarHoras() {
     const fecha = document.getElementById("fecha").value;
-    const horas = [...new Set(datosFiltrados.filter(d => soloDia(d["Fecha"]) === soloDia(fecha)).map(d => d["Hora de inicio"]))];
+    const horas = [...new Set(datosFiltrados.filter(d => d["Fecha"] === fecha).map(d => d["Hora de inicio"]))];
     const selectHora = document.getElementById("hora");
     selectHora.innerHTML = "<option value=''>Seleccione</option>";
     horas.forEach(h => {
@@ -245,12 +206,12 @@
     const hora = document.getElementById("hora").value;
     const resultado = document.getElementById("resultado");
 
-    const coincidencias = datosFiltrados.filter(d => soloDia(d["Fecha"]) === soloDia(fecha) && d["Hora de inicio"] === hora);
+    const coincidencias = datosFiltrados.filter(d => d["Fecha"] === fecha && d["Hora de inicio"] === hora);
 
     if (coincidencias.length === 1) {
       resultado.innerHTML = renderPase(coincidencias[0]);
     } else if (coincidencias.length > 1) {
-      resultado.innerHTML = "<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>" +
+      resultado.innerHTML = `<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>` +
         coincidencias.map(c => renderPase(c)).join("");
     } else {
       resultado.innerHTML = "";
@@ -278,19 +239,26 @@
   }
   document.getElementById("limpiar").addEventListener("click", () => {
   document.getElementById("rut").value = "";
-  document.getElementById("rut").removeAttribute("readonly");
   document.getElementById("rut").focus();
   document.getElementById("fecha").innerHTML = "";
-  document.getElementById("fecha").removeAttribute("disabled");
   document.getElementById("hora").innerHTML = "";
-  document.getElementById("hora").removeAttribute("disabled");
   document.getElementById("campos-adicionales").style.display = "none";
   document.getElementById("resultado").innerHTML = "";
   datosFiltrados = [];
 
+  // Limpiar el parámetro "rut" de la URL sin recargar la página
   const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
   window.history.replaceState({}, document.title, newUrl);
 });
+  document.getElementById("limpiar").addEventListener("click", () => {
+    document.getElementById("rut").value = "";
+    document.getElementById("rut").focus();
+    document.getElementById("fecha").innerHTML = "";
+    document.getElementById("hora").innerHTML = "";
+    document.getElementById("campos-adicionales").style.display = "none";
+    document.getElementById("resultado").innerHTML = "";
+    datosFiltrados = [];
+  });
 </script>
 
 </body>
