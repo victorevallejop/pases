@@ -2,12 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Formulario de Pase Presencial</title>
   <style>
     body {
       font-family: Calibri, sans-serif;
       background-color: #f2f2f2;
       padding: 20px;
+      margin: 0;
     }
 
     h2 {
@@ -32,22 +34,24 @@
 
     select, input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-top: 5px;
       border-radius: 5px;
       border: 1px solid #ccc;
+      font-size: 16px;
     }
 
     button {
       margin-top: 20px;
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       background-color: #ec660c;
       color: white;
       font-weight: bold;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 16px;
     }
 
     button:hover {
@@ -58,7 +62,9 @@
       border: 1px solid #ccc;
       padding: 15px;
       background-color: #fff;
-      margin-bottom: 20px;
+      margin: 20px auto;
+      max-width: 600px;
+      border-radius: 8px;
     }
 
     #loader {
@@ -70,6 +76,19 @@
     #loader img {
       width: 40px;
       height: 40px;
+    }
+
+    @media (max-width: 600px) {
+      form, .pase {
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: none;
+      }
+
+      select, input, button {
+        font-size: 15px;
+        padding: 10px;
+      }
     }
   </style>
 </head>
@@ -88,126 +107,159 @@
       <label>Hora:</label>
       <select id="hora" name="hora" required></select>
     </div>
+    <button type="button" id="limpiar">Limpiar formulario</button>
   </form>
 
-  <div id="loader">
-    <img src="https://i.imgur.com/llF5iyg.gif" alt="Cargando...">
-    <p>Cargando información, por favor espere...</p>
-  </div>
+<div id="loader">
+  <img src="https://i.imgur.com/llF5iyg.gif" alt="Cargando...">
+  <p>Cargando información, por favor espere...</p>
+</div>
 
-  <div id="resultado" style="margin-top: 20px;"></div>
+<div id="resultado" style="margin-top: 20px;"></div>
 
-  <script>
-    let datosFiltrados = [];
+<script>
+  let datosFiltrados = [];
 
-    function formatearFecha(fechaStr) {
-      const fecha = new Date(fechaStr);
-      return fecha.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  function formatearFecha(fechaStr) {
+    const fecha = new Date(fechaStr);
+    return fecha.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function formatearHora(horaStr) {
+    const hora = new Date(horaStr);
+    return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const rut = urlParams.get("rut");
+    if (rut) {
+      const inputRut = document.getElementById("rut");
+      inputRut.value = rut;
+      inputRut.dispatchEvent(new Event("change"));
     }
+  });
 
-    function formatearHora(horaStr) {
-      const hora = new Date(horaStr);
-      return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
-    }
+  document.getElementById("rut").addEventListener("change", async () => {
+    const rut = document.getElementById("rut").value.trim();
+    if (!rut) return;
 
-    document.getElementById("rut").addEventListener("change", async () => {
-      const rut = document.getElementById("rut").value.trim();
-      if (!rut) return;
+    const loader = document.getElementById("loader");
+    const resultado = document.getElementById("resultado");
+    loader.style.display = "block";
+    resultado.innerHTML = "";
 
-      const loader = document.getElementById("loader");
-      const resultado = document.getElementById("resultado");
-      loader.style.display = "block";
-      resultado.innerHTML = "";
+    const url = `https://script.google.com/macros/s/AKfycbxkqgno-MCqD8kcWq-llNuZ46Cuxi4Ar45n1J3UWGpucUarLucBOzC9-_mCVTmG5Ex6/exec?action=buscarPorRUT&rut=${encodeURIComponent(rut)}`;
+    const response = await fetch(url);
 
-      const url = `https://script.google.com/macros/s/AKfycbxkqgno-MCqD8kcWq-llNuZ46Cuxi4Ar45n1J3UWGpucUarLucBOzC9-_mCVTmG5Ex6/exec?action=buscarPorRUT&rut=${encodeURIComponent(rut)}`;
-      const response = await fetch(url);
+    try {
+      const datos = await response.json();
+      loader.style.display = "none";
 
-      try {
-        const datos = await response.json();
-        loader.style.display = "none";
-
-        if (datos.length === 0) {
-          resultado.innerHTML = `<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>`;
-          document.getElementById("campos-adicionales").style.display = "none";
-          return;
-        }
-
-        datosFiltrados = datos;
-        document.getElementById("campos-adicionales").style.display = "block";
-
-        const fechas = [...new Set(datos.map(d => d["Fecha"]))];
-        llenarSelect("fecha", fechas);
-
-        document.getElementById("fecha").addEventListener("change", actualizarHoras);
-        document.getElementById("hora").addEventListener("change", mostrarPaseSiUnico);
-
-      } catch (e) {
-        loader.style.display = "none";
-        resultado.innerHTML = `<p style='color:red;'>Error al consultar el RUT.</p>`;
+      if (datos.length === 0) {
+        resultado.innerHTML = `<p style='color:red;'>No se encontraron clases para el RUT ingresado.</p>`;
+        document.getElementById("campos-adicionales").style.display = "none";
+        return;
       }
+
+      datosFiltrados = datos;
+      document.getElementById("campos-adicionales").style.display = "block";
+
+      const fechas = [...new Set(datos.map(d => d["Fecha"]))];
+      llenarSelect("fecha", fechas);
+
+      document.getElementById("fecha").addEventListener("change", actualizarHoras);
+      document.getElementById("hora").addEventListener("change", mostrarPaseSiUnico);
+
+    } catch (e) {
+      loader.style.display = "none";
+      resultado.innerHTML = `<p style='color:red;'>Error al consultar el RUT.</p>`;
+    }
+  });
+
+  function llenarSelect(id, opciones) {
+    const select = document.getElementById(id);
+    select.innerHTML = "<option value=''>Seleccione</option>";
+    opciones.forEach(v => {
+      const option = document.createElement("option");
+      option.value = v;
+      option.textContent = formatearFecha(v);
+      select.appendChild(option);
     });
+  }
 
-    function llenarSelect(id, opciones) {
-      const select = document.getElementById(id);
-      select.innerHTML = "<option value=''>Seleccione</option>";
-      opciones.forEach(v => {
-        const option = document.createElement("option");
-        option.value = v;
-        option.textContent = formatearFecha(v);
-        select.appendChild(option);
-      });
+  function actualizarHoras() {
+    const fecha = document.getElementById("fecha").value;
+    const horas = [...new Set(datosFiltrados.filter(d => d["Fecha"] === fecha).map(d => d["Hora de inicio"]))];
+    const selectHora = document.getElementById("hora");
+    selectHora.innerHTML = "<option value=''>Seleccione</option>";
+    horas.forEach(h => {
+      const option = document.createElement("option");
+      option.value = h;
+      option.textContent = formatearHora(h);
+      selectHora.appendChild(option);
+    });
+  }
+
+  function mostrarPaseSiUnico() {
+    const fecha = document.getElementById("fecha").value;
+    const hora = document.getElementById("hora").value;
+    const resultado = document.getElementById("resultado");
+
+    const coincidencias = datosFiltrados.filter(d => d["Fecha"] === fecha && d["Hora de inicio"] === hora);
+
+    if (coincidencias.length === 1) {
+      resultado.innerHTML = renderPase(coincidencias[0]);
+    } else if (coincidencias.length > 1) {
+      resultado.innerHTML = `<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>` +
+        coincidencias.map(c => renderPase(c)).join("");
+    } else {
+      resultado.innerHTML = "";
     }
+  }
 
-    function actualizarHoras() {
-      const fecha = document.getElementById("fecha").value;
-      const horas = [...new Set(datosFiltrados.filter(d => d["Fecha"] === fecha).map(d => d["Hora de inicio"]))];
-      const selectHora = document.getElementById("hora");
-      selectHora.innerHTML = "<option value=''>Seleccione</option>";
-      horas.forEach(h => {
-        const option = document.createElement("option");
-        option.value = h;
-        option.textContent = formatearHora(h);
-        selectHora.appendChild(option);
-      });
-    }
+  function renderPase(clase) {
+    const textoQR = `Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]}`;
 
-    function mostrarPaseSiUnico() {
-      const fecha = document.getElementById("fecha").value;
-      const hora = document.getElementById("hora").value;
-      const resultado = document.getElementById("resultado");
-
-      const coincidencias = datosFiltrados.filter(d => d["Fecha"] === fecha && d["Hora de inicio"] === hora);
-
-      if (coincidencias.length === 1) {
-        resultado.innerHTML = renderPase(coincidencias[0]);
-      } else if (coincidencias.length > 1) {
-        resultado.innerHTML = `<p style='color:orange;'>Advertencia: Hay más de una clase en ese horario. Se mostrarán todos los pases encontrados.</p>` +
-          coincidencias.map(c => renderPase(c)).join("");
-      } else {
-        resultado.innerHTML = "";
-      }
-    }
-
-    function renderPase(clase) {
-      const textoQR = `Estudiante: ${clase["Nombre completo del estudiante"]} - RUT: ${clase["Nombre de usuario del estudiante"]} - Sala: ${clase["Lugar"]} - Fecha: ${formatearFecha(clase["Fecha"])} , Inicio: ${formatearHora(clase["Hora de inicio"])} , Fin: ${formatearHora(clase["Hora de fin"])} - Grupo: ${clase["Grupo"]}`;
-
-      return `
-        <div class="pase">
-          <h3>Pase de Acceso</h3>
-          <p><strong>Nombre:</strong> ${clase["Nombre completo del estudiante"]}</p>
-          <p><strong>RUT:</strong> ${clase["Nombre de usuario del estudiante"]}</p>
-          <p><strong>Asignatura:</strong> ${clase["Asignatura"]}</p>
-          <p><strong>Ensayo:</strong> ${clase["Ensayo"]}</p>
-          <p><strong>Sala:</strong> ${clase["Lugar"]}</p>
-          <p><strong>Grupo:</strong> ${clase["Grupo"]}</p>
-          <p><strong>Fecha:</strong> ${formatearFecha(clase["Fecha"])} de ${formatearHora(clase["Hora de inicio"])} a ${formatearHora(clase["Hora de fin"])} </p>
-          <div style="text-align:center; margin-top:15px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(textoQR)}" alt="Código QR">
-          </div>
+    return `
+      <div class="pase">
+        <h3>Pase de Acceso</h3>
+        <p><strong>Nombre:</strong> ${clase["Nombre completo del estudiante"]}</p>
+        <p><strong>RUT:</strong> ${clase["Nombre de usuario del estudiante"]}</p>
+        <p><strong>Asignatura:</strong> ${clase["Asignatura"]}</p>
+        <p><strong>Ensayo:</strong> ${clase["Ensayo"]}</p>
+        <p><strong>Sala:</strong> ${clase["Lugar"]}</p>
+        <p><strong>Grupo:</strong> ${clase["Grupo"]}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(clase["Fecha"])} de ${formatearHora(clase["Hora de inicio"])} a ${formatearHora(clase["Hora de fin"])} </p>
+        <div style="text-align:center; margin-top:15px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(textoQR)}" alt="Código QR">
         </div>
-      `;
-    }
-  </script>
+      </div>
+    `;
+  }
+  document.getElementById("limpiar").addEventListener("click", () => {
+  document.getElementById("rut").value = "";
+  document.getElementById("rut").focus();
+  document.getElementById("fecha").innerHTML = "";
+  document.getElementById("hora").innerHTML = "";
+  document.getElementById("campos-adicionales").style.display = "none";
+  document.getElementById("resultado").innerHTML = "";
+  datosFiltrados = [];
+
+  // Limpiar el parámetro "rut" de la URL sin recargar la página
+  const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+  window.history.replaceState({}, document.title, newUrl);
+});
+  document.getElementById("limpiar").addEventListener("click", () => {
+    document.getElementById("rut").value = "";
+    document.getElementById("rut").focus();
+    document.getElementById("fecha").innerHTML = "";
+    document.getElementById("hora").innerHTML = "";
+    document.getElementById("campos-adicionales").style.display = "none";
+    document.getElementById("resultado").innerHTML = "";
+    datosFiltrados = [];
+  });
+</script>
 
 </body>
 </html>
