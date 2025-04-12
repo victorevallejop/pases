@@ -135,32 +135,34 @@
     return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const isFromMoodle = window.location !== window.parent.location; // ✅ solo una vez declarada
+  window.addEventListener("DOMContentLoaded", () => {
+  const isFromMoodle = window.location !== window.parent.location;
   if (!isFromMoodle) {
     document.getElementById("limpiar").style.display = "block";
   }
+    if (!isFromMoodle) {
+      document.getElementById("limpiar").style.display = "block";
+    }
+    // (ya definido arriba, se elimina duplicado)
+    const soloDia = (isoStr) => new Date(isoStr).toISOString().split("T")[0];
+    const urlParams = new URLSearchParams(window.location.search);
+    const rut = urlParams.get("rut");
+    const fechaParam = urlParams.get("fecha");
+    if (rut) {
+      const inputRut = document.getElementById("rut");
+      inputRut.value = rut;
+      inputRut.dispatchEvent(new Event("change"));
+    }
 
-  const soloDia = (isoStr) => new Date(isoStr).toISOString().split("T")[0];
-  const urlParams = new URLSearchParams(window.location.search);
-  const rut = urlParams.get("rut");
-  const fechaParam = urlParams.get("fecha");
-
-  if (rut) {
-    const inputRut = document.getElementById("rut");
-    inputRut.value = rut;
-    inputRut.dispatchEvent(new Event("change"));
-  }
-
-  if (fechaParam === "hoy") {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const hoyISO = hoy.toISOString().split("T")[0];
-    urlParams.set("fecha", hoyISO);
-    const newUrl = `${window.location.origin}${window.location.pathname}?${urlParams}`;
-    window.history.replaceState({}, "", newUrl);
-  }
-});
+    if (fechaParam === "hoy") {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const hoyISO = hoy.toISOString().split("T")[0];
+      urlParams.set("fecha", hoyISO);
+      const newUrl = `${window.location.origin}${window.location.pathname}?${urlParams}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+  });
 
   document.getElementById("rut").addEventListener("change", async () => {
     const rut = document.getElementById("rut").value.trim();
