@@ -91,7 +91,7 @@
 
     function formatearHora(horaStr) {
       const hora = new Date(horaStr);
-      return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+      return hora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
     }
 
     document.getElementById("rut").addEventListener("change", async () => {
